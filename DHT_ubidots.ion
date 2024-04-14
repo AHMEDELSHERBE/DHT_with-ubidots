@@ -1,0 +1,73 @@
+// This example sends data along with timestamp in POSIX ms standard
+// to a variable to Ubidots API through HTTP, TCP or UDP protocol.
+
+/****************************************
+ * Include Libraries
+ ****************************************/
+
+#include "Ubidots.h"
+/****************************************
+ * Define Instances and Constants
+ ****************************************/
+#include "DHT.h" 
+#define DHTPIN D2
+#define DHTTYPE DHT11 
+DHT dht(DHTPIN, DHTTYPE);
+const char* password = "95603081";   
+const char* UBIDOTS_TOKEN = "BBFF-TlqOUPz4EjB9AeEXgZUpPPPD2OcZpu";  // Put here your Ubidots TOKEN
+const char* WIFI_SSID = "we21";      // Put here your Wi-Fi SSID
+const char* WIFI_PASS = "95603081";      // Put here your Wi-Fi password
+char *macAddrs;
+Ubidots ubidots(UBIDOTS_TOKEN, UBI_HTTP);
+
+/****************************************
+ * Auxiliar Functions
+ ****************************************/
+
+// Put here your auxiliar functions
+
+/****************************************
+ * Main Functions
+ ****************************************/
+
+void setup() {
+  pinMode(D1,OUTPUT);
+    dht.begin();
+  Serial.begin(9600);
+  delay(100);
+  ubidots.wifiConnect(WIFI_SSID, WIFI_PASS);
+  // ubidots.setDebug(true);  // Uncomment this line for printing debug messages
+}
+
+void loop() {
+  bool Swit_ch;                   ///////////ON/OF/////////
+   float temperature = dht.readTemperature();
+  float humidty=dht.readHumidity();
+  Serial.println("humidity");
+  Serial.print(humidty);
+  Serial.print(temperature);
+  unsigned long timestamp_seconds = 1571615253L;  // Put here your timestamp in seconds
+  unsigned int timestamp_milliseconds = 0;        // Put here the number of milliseconds to shift your timestamp
+ ubidots.add("temperature", temperature, NULL, timestamp_seconds, timestamp_milliseconds);  // Change for your variable name
+ ubidots.add("humidty", humidty, NULL ,timestamp_seconds, timestamp_milliseconds); 
+ 
+ ubidots.add("Switch", Swit_ch, NULL ,timestamp_seconds, timestamp_milliseconds);
+ if(Swit_ch==1)
+ {
+  digitalWrite(D1,HIGH);
+  Serial.print("on");
+ }
+ else
+ {
+    digitalWrite(D1,LOW);
+  Serial.print("OFF");
+ }
+     bool bufferSent = false;
+  bufferSent = ubidots.send();  // Will send data to a device label that matches the device Id
+
+  if (bufferSent) {
+    // Do something if values were sent properly
+    Serial.println("Values sent by the device");
+  }
+  delay(5000);
+}
